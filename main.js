@@ -47,17 +47,22 @@ function setupEventListeners() {
 // Initialize MQTT connection
 function initializeMQTT() {
   addLog("Menghubungkan ke MQTT broker...", "info");
-  mqttClient = mqtt.connect(MQTT_BROKER, {
-    clientId: CLIENT_ID,
-    clean: true,
-    connectTimeout: 5000,
-    reconnectPeriod: 2000,
-  });
+  try {
+    mqttClient = mqtt.connect(MQTT_BROKER, {
+      clientId: CLIENT_ID,
+      clean: true,
+      connectTimeout: 5000,
+      reconnectPeriod: 2000,
+    });
 
-  mqttClient.on("connect", onMQTTConnect);
-  mqttClient.on("message", onMQTTMessage);
-  mqttClient.on("error", onMQTTError);
-  mqttClient.on("close", onMQTTOffline);
+    mqttClient.on("connect", onMQTTConnect);
+    mqttClient.on("message", onMQTTMessage);
+    mqttClient.on("error", onMQTTError);
+    mqttClient.on("close", onMQTTOffline);
+  } catch (error) {
+    addLog(`❌ Gagal inisialisasi MQTT: ${error.message}`, "error");
+    updateConnectionStatus(false);
+  }
 }
 
 // MQTT event handlers
@@ -174,7 +179,7 @@ function updateRelayStatus(status) {
 
 // Control functions
 function controlRelay(command) {
-  if (!mqttClient?.connected()) {
+  if (!mqttClient || !mqttClient.connected) {
     addLog("❌ Tidak terhubung ke MQTT", "error");
     return;
   }
