@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Pakan Ayam ESP32</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐔 Dashboard Pakan Ayam</h1>
+            <div class="connection-status">
+                <div id="connectionIndicator" class="status-indicator offline"></div>
+                <span id="connectionText">Terputus</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="dashboard-grid">
+                <!-- Status ESP32 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📡 Status ESP32</h3>
+                    </div>
+                    <div class="card-content">
+                        <div id="esp32Status" class="status-badge offline">OFFLINE</div>
+                        <p class="last-update">Terakhir aktif: <span id="lastSeen">-</span></p>
+                    </div>
+                </div>
+
+                <!-- Status Pakan -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🌾 Status Pakan</h3>
+                    </div>
+                    <div class="card-content">
+                        <div id="pakanStatus" class="status-value">Tidak Diketahui</div>
+                        <div class="status-icon" id="pakanIcon">❓</div>
+                    </div>
+                </div>
+
+                <!-- Jarak Sensor -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📏 Jarak Sensor</h3>
+                    </div>
+                    <div class="card-content">
+                        <div id="jarakValue" class="sensor-value">-- cm</div>
+                        <div class="progress-bar">
+                            <div id="jarakProgress" class="progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kontrol Relay -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>⚡ Kontrol Motor</h3>
+                    </div>
+                    <div class="card-content">
+                        <div id="relayStatus" class="status-value">OFF</div>
+                        <div class="control-buttons">
+                            <button id="btnRelayOn" class="btn btn-on">NYALAKAN</button>
+                            <button id="btnRelayOff" class="btn btn-off">MATIKAN</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Activity -->
+            <div class="card log-card">
+                <div class="card-header">
+                    <h3>📋 Log Aktivitas</h3>
+                    <button id="btnClearLog" class="btn-clear">Bersihkan</button>
+                </div>
+                <div class="card-content">
+                    <div id="logContainer" class="log-container">
+                        <p class="log-entry">Dashboard dimulai...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
