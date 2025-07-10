@@ -1,19 +1,17 @@
 // MQTT Configuration
-const MQTT_BROKER = "wss://broker.hivemq.com:8884/mqtt"
-const CLIENT_ID = "WebDashboard_" + Math.random().toString(16).substr(2, 8)
-
-// Topics
+const MQTT_BROKER = "wss://broker.hivemq.com:8884/mqtt";
+const CLIENT_ID = "WebDashboard_" + Math.random().toString(16).slice(2, 10);
 const TOPICS = {
   STATUS: "pakan/status",
   JARAK: "pakan/jarak",
   RELAY: "pakan/relay",
-  RELAY_CONTROL: "pakan/relay/control",
-}
+  RELAY_CONTROL: "pakan/perintah",
+};
 
 // Global variables
-let mqttClient = null
-let esp32LastSeen = null
-let esp32Timeout = null
+let mqttClient = null;
+let esp32LastSeen = null;
+let esp32Timeout = null;
 
 // DOM Elements
 const elements = {
@@ -30,224 +28,182 @@ const elements = {
   btnRelayOff: document.getElementById("btnRelayOff"),
   logContainer: document.getElementById("logContainer"),
   btnClearLog: document.getElementById("btnClearLog"),
-}
-
-// Import MQTT library
-const mqtt = require("mqtt")
+};
 
 // Initialize dashboard
 document.addEventListener("DOMContentLoaded", () => {
-  initializeMQTT()
-  setupEventListeners()
-  addLog("Dashboard dimulai...", "info")
-})
+  initializeMQTT();
+  setupEventListeners();
+  addLog("Dashboard dimulai...", "info");
+});
 
 // Setup event listeners
 function setupEventListeners() {
-  elements.btnRelayOn.addEventListener("click", () => controlRelay("ON"))
-  elements.btnRelayOff.addEventListener("click", () => controlRelay("OFF"))
-  elements.btnClearLog.addEventListener("click", clearLog)
+  elements.btnRelayOn.addEventListener("click", () => controlRelay("ON"));
+  elements.btnRelayOff.addEventListener("click", () => controlRelay("OFF"));
+  elements.btnClearLog.addEventListener("click", clearLog);
 }
 
 // Initialize MQTT connection
 function initializeMQTT() {
-  addLog("Menghubungkan ke MQTT broker...", "info")
+  addLog("Menghubungkan ke MQTT broker...", "info");
+  mqttClient = mqtt.connect(MQTT_BROKER, {
+    clientId: CLIENT_ID,
+    clean: true,
+    connectTimeout: 5000,
+    reconnectPeriod: 2000,
+  });
 
-  try {
-    mqttClient = mqtt.connect(MQTT_BROKER, {
-      clientId: CLIENT_ID,
-      clean: true,
-      connectTimeout: 4000,
-      reconnectPeriod: 1000,
-    })
-
-    mqttClient.on("connect", onMQTTConnect)
-    mqttClient.on("message", onMQTTMessage)
-    mqttClient.on("error", onMQTTError)
-    mqttClient.on("offline", onMQTTOffline)
-    mqttClient.on("reconnect", onMQTTReconnect)
-  } catch (error) {
-    addLog("Error inisialisasi MQTT: " + error.message, "error")
-    updateConnectionStatus(false)
-  }
+  mqttClient.on("connect", onMQTTConnect);
+  mqttClient.on("message", onMQTTMessage);
+  mqttClient.on("error", onMQTTError);
+  mqttClient.on("close", onMQTTOffline);
 }
 
 // MQTT event handlers
 function onMQTTConnect() {
-  addLog("✅ Terhubung ke MQTT broker", "success")
-  updateConnectionStatus(true)
+  addLog("✅ Terhubung ke MQTT broker", "success");
+  updateConnectionStatus(true);
 
   // Subscribe to topics
   Object.values(TOPICS).forEach((topic) => {
     if (topic !== TOPICS.RELAY_CONTROL) {
-      mqttClient.subscribe(topic, (err) => {
+      mqttClient.subscribe(topic, { qos: 1 }, (err) => {
         if (err) {
-          addLog(`❌ Gagal subscribe ${topic}: ${err.message}`, "error")
+          addLog(`❌ Gagal subscribe ${topic}: ${err.message}`, "error");
         } else {
-          addLog(`📡 Subscribe ${topic}`, "info")
+          addLog(`📡 Subscribe ${topic}`, "info");
         }
-      })
+      });
     }
-  })
+  });
 }
 
 function onMQTTMessage(topic, message) {
-  const msg = message.toString()
-  updateESP32Status()
+  const msg = message.toString();
+  updateESP32Status();
 
   switch (topic) {
     case TOPICS.STATUS:
-      updatePakanStatus(msg)
-      addLog(`🌾 Status pakan: ${msg}`, "info")
-      break
-
+      updatePakanStatus(msg);
+      addLog(`🌾 Status pakan: ${msg}`, "info");
+      break;
     case TOPICS.JARAK:
-      updateJarakSensor(Number.parseFloat(msg))
-      addLog(`📐 Jarak: ${msg} cm`, "info")
-      break
-
+      updateJarakSensor(parseFloat(msg));
+      addLog(`📐 Jarak: ${msg} cm`, "info");
+      break;
     case TOPICS.RELAY:
-      updateRelayStatus(msg)
-      addLog(`⚡ Relay: ${msg}`, "info")
-      break
+      updateRelayStatus(msg);
+      addLog(`⚡ Relay: ${msg}`, "info");
+      break;
   }
 }
 
 function onMQTTError(error) {
-  addLog("❌ MQTT Error: " + error.message, "error")
-  updateConnectionStatus(false)
+  addLog(`❌ MQTT Error: ${error.message}`, "error");
+  updateConnectionStatus(false);
 }
 
 function onMQTTOffline() {
-  addLog("📡 MQTT Offline", "warning")
-  updateConnectionStatus(false)
-}
-
-function onMQTTReconnect() {
-  addLog("🔄 Mencoba reconnect MQTT...", "warning")
+  addLog("📡 MQTT Offline", "warning");
+  updateConnectionStatus(false);
 }
 
 // Update functions
 function updateConnectionStatus(connected) {
-  if (connected) {
-    elements.connectionIndicator.className = "status-indicator online"
-    elements.connectionText.textContent = "Terhubung"
-  } else {
-    elements.connectionIndicator.className = "status-indicator offline"
-    elements.connectionText.textContent = "Terputus"
-    updateESP32Status(false)
-  }
+  elements.connectionIndicator.className = `status-indicator ${connected ? "online" : "offline"}`;
+  elements.connectionText.textContent = connected ? "Terhubung" : "Terputus";
+  if (!connected) updateESP32Status(false);
 }
 
 function updateESP32Status(active = true) {
-  esp32LastSeen = new Date()
-
+  esp32LastSeen = new Date();
   if (active) {
-    elements.esp32Status.className = "status-badge online"
-    elements.esp32Status.textContent = "ONLINE"
-    elements.lastSeen.textContent = formatTime(esp32LastSeen)
+    elements.esp32Status.className = "status-badge online";
+    elements.esp32Status.textContent = "ONLINE";
+    elements.lastSeen.textContent = formatTime(esp32LastSeen);
 
-    // Reset timeout
-    if (esp32Timeout) clearTimeout(esp32Timeout)
+    if (esp32Timeout) clearTimeout(esp32Timeout);
     esp32Timeout = setTimeout(() => {
-      elements.esp32Status.className = "status-badge offline"
-      elements.esp32Status.textContent = "OFFLINE"
-      addLog("⚠️ ESP32 tidak merespons (timeout)", "warning")
-    }, 10000) // 10 seconds timeout
+      elements.esp32Status.className = "status-badge offline";
+      elements.esp32Status.textContent = "OFFLINE";
+      addLog("⚠️ ESP32 tidak merespons (timeout)", "warning");
+    }, 15000);
   } else {
-    elements.esp32Status.className = "status-badge offline"
-    elements.esp32Status.textContent = "OFFLINE"
+    elements.esp32Status.className = "status-badge offline";
+    elements.esp32Status.textContent = "OFFLINE";
   }
 }
 
 function updatePakanStatus(status) {
-  elements.pakanStatus.textContent = status
-
+  elements.pakanStatus.textContent = status;
   if (status === "Penuh") {
-    elements.pakanIcon.textContent = "✅"
-    elements.pakanStatus.style.color = "#27ae60"
+    elements.pakanIcon.textContent = "✅";
+    elements.pakanStatus.style.color = "#27ae60";
   } else if (status === "Habis") {
-    elements.pakanIcon.textContent = "⚠️"
-    elements.pakanStatus.style.color = "#e74c3c"
+    elements.pakanIcon.textContent = "⚠️";
+    elements.pakanStatus.style.color = "#e74c3c";
   } else {
-    elements.pakanIcon.textContent = "❓"
-    elements.pakanStatus.style.color = "#7f8c8d"
+    elements.pakanIcon.textContent = "❓";
+    elements.pakanStatus.style.color = "#7f8c8d";
   }
 }
 
 function updateJarakSensor(jarak) {
-  if (isNaN(jarak)) {
-    elements.jarakValue.textContent = "-- cm"
-    elements.jarakProgress.style.width = "0%"
-    return
+  if (isNaN(jarak) || jarak < 0) {
+    elements.jarakValue.textContent = "-- cm";
+    elements.jarakProgress.style.width = "0%";
+    return;
   }
 
-  elements.jarakValue.textContent = jarak.toFixed(1) + " cm"
+  elements.jarakValue.textContent = jarak.toFixed(1) + " cm";
+  const maxDistance = 30;
+  const percentage = Math.min((jarak / maxDistance) * 100, 100);
+  elements.jarakProgress.style.width = percentage + "%";
 
-  // Update progress bar (assuming max distance is 30cm)
-  const maxDistance = 30
-  const percentage = Math.min((jarak / maxDistance) * 100, 100)
-  elements.jarakProgress.style.width = percentage + "%"
-
-  // Change color based on distance
-  if (jarak < 5) {
-    elements.jarakValue.style.color = "#e74c3c"
-  } else if (jarak < 10) {
-    elements.jarakValue.style.color = "#f39c12"
-  } else {
-    elements.jarakValue.style.color = "#27ae60"
-  }
+  elements.jarakValue.style.color =
+    jarak < 5 ? "#e74c3c" : jarak < 10 ? "#f39c12" : "#27ae60";
 }
 
 function updateRelayStatus(status) {
-  elements.relayStatus.textContent = status
-
-  if (status === "ON") {
-    elements.relayStatus.style.color = "#27ae60"
-    elements.btnRelayOn.disabled = true
-    elements.btnRelayOff.disabled = false
-  } else {
-    elements.relayStatus.style.color = "#e74c3c"
-    elements.btnRelayOn.disabled = false
-    elements.btnRelayOff.disabled = true
-  }
+  elements.relayStatus.textContent = status;
+  elements.relayStatus.style.color = status === "ON" ? "#27ae60" : "#e74c3c";
+  elements.btnRelayOn.disabled = status === "ON";
+  elements.btnRelayOff.disabled = status === "OFF";
 }
 
 // Control functions
 function controlRelay(command) {
-  if (!mqttClient || !mqttClient.connected) {
-    addLog("❌ Tidak terhubung ke MQTT", "error")
-    return
+  if (!mqttClient?.connected()) {
+    addLog("❌ Tidak terhubung ke MQTT", "error");
+    return;
   }
 
-  mqttClient.publish(TOPICS.RELAY_CONTROL, command, (err) => {
+  mqttClient.publish(TOPICS.RELAY_CONTROL, command, { qos: 1 }, (err) => {
     if (err) {
-      addLog(`❌ Gagal kirim perintah ${command}: ${err.message}`, "error")
+      addLog(`❌ Gagal kirim perintah ${command}: ${err.message}`, "error");
     } else {
-      addLog(`📤 Perintah ${command} terkirim`, "success")
+      addLog(`📤 Perintah ${command} terkirim`, "success");
     }
-  })
+  });
 }
 
 // Utility functions
 function addLog(message, type = "info") {
-  const logEntry = document.createElement("p")
-  logEntry.className = `log-entry ${type}`
-  logEntry.textContent = `[${formatTime(new Date())}] ${message}`
+  const logEntry = document.createElement("p");
+  logEntry.className = `log-entry ${type}`;
+  logEntry.textContent = `[${formatTime(new Date())}] ${message}`;
+  elements.logContainer.appendChild(logEntry);
+  elements.logContainer.scrollTop = elements.logContainer.scrollHeight;
 
-  elements.logContainer.appendChild(logEntry)
-  elements.logContainer.scrollTop = elements.logContainer.scrollHeight
-
-  // Keep only last 50 entries
-  const entries = elements.logContainer.querySelectorAll(".log-entry")
-  if (entries.length > 50) {
-    entries[0].remove()
+  while (elements.logContainer.children.length > 50) {
+    elements.logContainer.firstChild.remove();
   }
 }
 
 function clearLog() {
-  elements.logContainer.innerHTML = ""
-  addLog("Log dibersihkan", "info")
+  elements.logContainer.innerHTML = "";
+  addLog("Log dibersihkan", "info");
 }
 
 function formatTime(date) {
@@ -255,12 +211,11 @@ function formatTime(date) {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-  })
+  });
 }
 
-// Auto-refresh last seen time
 setInterval(() => {
   if (esp32LastSeen) {
-    elements.lastSeen.textContent = formatTime(esp32LastSeen)
+    elements.lastSeen.textContent = formatTime(esp32LastSeen);
   }
-}, 1000)
+}, 1000);
