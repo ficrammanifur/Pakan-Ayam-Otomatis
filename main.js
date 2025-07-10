@@ -32,6 +32,12 @@ const elements = {
 
 // Initialize dashboard
 document.addEventListener("DOMContentLoaded", () => {
+  // Check if MQTT library is loaded
+  if (typeof mqtt === "undefined") {
+    addLog("❌ MQTT library not loaded. Please check the script inclusion in index.html", "error");
+    return;
+  }
+
   initializeMQTT();
   setupEventListeners();
   addLog("Dashboard dimulai...", "info");
