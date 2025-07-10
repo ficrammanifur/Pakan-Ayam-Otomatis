@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Pakan Ayam ESP32</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://unpkg.com/mqtt@5.0.0/dist/mqtt.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -19,7 +19,6 @@
 
         <main>
             <div class="dashboard-grid">
-                <!-- Status ESP32 -->
                 <div class="card">
                     <div class="card-header">
                         <h3>📡 Status ESP32</h3>
@@ -30,7 +29,6 @@
                     </div>
                 </div>
 
-                <!-- Status Pakan -->
                 <div class="card">
                     <div class="card-header">
                         <h3>🌾 Status Pakan</h3>
@@ -41,7 +39,6 @@
                     </div>
                 </div>
 
-                <!-- Jarak Sensor -->
                 <div class="card">
                     <div class="card-header">
                         <h3>📏 Jarak Sensor</h3>
@@ -54,7 +51,6 @@
                     </div>
                 </div>
 
-                <!-- Kontrol Relay -->
                 <div class="card">
                     <div class="card-header">
                         <h3>⚡ Kontrol Motor</h3>
@@ -69,7 +65,6 @@
                 </div>
             </div>
 
-            <!-- Log Activity -->
             <div class="card log-card">
                 <div class="card-header">
                     <h3>📋 Log Aktivitas</h3>
