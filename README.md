@@ -1,164 +1,206 @@
-# 🐔 Sistem Pakan Ayam Otomatis dengan ESP32
+<h1 align="center">
+  Sistem Pakan Ayam Otomatis dengan ESP32  
+  <img src="https://www.espressif.com/sites/default/files/ESP32_logo.png" alt="ESP32 Logo" height="30" style="vertical-align: middle; margin-left: 10px;" />
+</h1>
 
-Proyek IoT untuk memantau dan mengontrol pakan ayam menggunakan **ESP32**, sensor ultrasonik **HC-SR04**, **relay**, **MQTT**, dan **notifikasi Telegram**.  
-Sistem ini memantau status pakan (Penuh/Habis), jarak pakan, mengontrol relay melalui dashboard web, serta mengirim notifikasi Telegram saat pakan habis.
+<p align="center"><em>Sistem IoT untuk memantau dan mengontrol pakan ayam menggunakan ESP32, sensor ultrasonik, MQTT, dan notifikasi Telegram</em></p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/last%20commit-today-brightgreen" />
+  <img src="https://img.shields.io/badge/language-C%2B%2B-blue" />
+  <img src="https://img.shields.io/badge/platform-ESP32-informational" />
+  <img src="https://img.shields.io/badge/protocol-MQTT-green" />
+</p>
 
 ---
 
-## ✨ Fitur
+## 🚀 Fitur
 
-- **Pemantauan Jarak Pakan**  
-  Menggunakan sensor HC-SR04: jarak < 5 cm = *Habis*, > 5 cm = *Penuh*.
-- **Kontrol Relay**  
-  Nyalakan atau matikan motor via dashboard web (MQTT).
-- **Notifikasi Telegram**  
-  Pesan otomatis saat pakan habis (< 5 cm) dengan cooldown 1 jam (anti spam).
-- **Dashboard Web**  
+- ✅ **Pemantauan Jarak Pakan**  
+  Sensor HC-SR04 mendeteksi status pakan: < 5 cm = *Habis*, > 5 cm = *Penuh*.
+- ✅ **Kontrol Relay**  
+  Mengatur motor pakan melalui dashboard web via MQTT.
+- ✅ **Notifikasi Telegram**  
+  Kirim pesan otomatis saat pakan habis (< 5 cm) dengan cooldown 1 jam (anti-spam).
+- ✅ **Dashboard Web**  
   Menampilkan status pakan, jarak, status relay, dan kontrol real-time.
-- **MQTT**  
-  Komunikasi ESP32 ↔ dashboard via broker HiveMQ.
+- ✅ **Komunikasi MQTT**  
+  Menggunakan broker HiveMQ untuk komunikasi ESP32 ↔ dashboard.
 
 ---
 
-## 🔧 Komponen
+## 🛠 Komponen
 
 ### Perangkat Keras
-- ESP32
-- Sensor Ultrasonik HC-SR04  
-  - Trig → Pin 14
-  - Echo → Pin 27
-- Relay → Pin 26
+- **ESP32**  
+  Mikrokontroler utama.
+- **Sensor Ultrasonik HC-SR04**  
+  - Trig: Pin 14  
+  - Echo: Pin 27  
+  - VCC: 5V  
+  - GND: GND  
+- **Relay**  
+  - Pin: 26  
 
 ### Perangkat Lunak
-- Arduino IDE (program ESP32)
-- MQTT.js (dashboard web)
-- Broker MQTT: `broker.hivemq.com:1883`
-- API Telegram (notifikasi)
+- **Arduino IDE**: Untuk memprogram ESP32.
+- **MQTT.js**: Logika dashboard web.
+- **Broker MQTT**: `broker.hivemq.com:1883`.
+- **API Telegram**: Untuk notifikasi.
 
 ---
 
 ## 📁 Struktur File
 
-| File | Deskripsi |
-|-----|-----------|
-| `pakan_ayam.ino` | Kode ESP32 (sensor, relay, MQTT, Telegram) |
-| `index.html` | Dashboard web |
-| `main.js` | Logika dashboard & MQTT |
-| `style.css` | Styling dashboard |
-| `README.md` | Dokumentasi proyek ini |
+| File                | Deskripsi                              |
+|---------------------|----------------------------------------|
+| `pakan_ayam.ino`    | Kode utama ESP32 (sensor, relay, MQTT, Telegram) |
+| `index.html`        | Antarmuka dashboard web                |
+| `main.js`           | Logika dashboard dan komunikasi MQTT   |
+| `style.css`         | Styling untuk dashboard web            |
+| `README.md`         | Dokumentasi proyek                     |
 
 ---
 
 ## 🧪 Simulasi
 
-Proyek dapat diuji di [Wokwi Simulator](https://wokwi.com):  
-> ⚠️ Catatan: Wokwi tidak mendukung HTTP request (Telegram).  
-Untuk notifikasi Telegram, gunakan ESP32 fisik & WiFi nyata.
+Proyek ini dapat diuji menggunakan [Wokwi Simulator](https://wokwi.com).  
+⚠️ **Catatan**: Wokwi tidak mendukung HTTP request untuk notifikasi Telegram. Gunakan ESP32 fisik dan koneksi WiFi untuk pengujian penuh.
 
 ---
 
 ## 🚀 Cara Penggunaan
 
-### 1️⃣ Persiapan Perangkat Keras
-- Sambungkan HC-SR04:
-  - Trig → Pin 14
-  - Echo → Pin 27
-  - VCC → 5V
-  - GND → GND
-- Relay → Pin 26
-- Pastikan ESP32 terhubung ke WiFi.
+### 1. Persiapan Perangkat Keras
+1. Hubungkan **HC-SR04**:
+   - Trig → Pin 14
+   - Echo → Pin 27
+   - VCC → 5V
+   - GND → GND
+2. Hubungkan **Relay** ke Pin 26.
+3. Pastikan ESP32 terhubung ke WiFi.
 
----
-
-### 2️⃣ Konfigurasi Perangkat Lunak
+### 2. Konfigurasi Perangkat Lunak
 
 #### ESP32
-- Buka `pakan_ayam.ino` di Arduino IDE.
-- Ganti `ssid` & `password` sesuai WiFi Anda.
-- Isi `BOT_TOKEN` & `CHAT_ID`:
-  - `BOT_TOKEN`: dapat dari BotFather.
-  - `CHAT_ID`: dapatkan via `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`.
-- Upload ke ESP32.
+1. Buka `pakan_ayam.ino` di Arduino IDE.
+2. Ganti `ssid` dan `password` sesuai jaringan WiFi Anda.
+3. Isi konfigurasi Telegram:
+   - `BOT_TOKEN`: Dapatkan dari BotFather.
+   - `CHAT_ID`: Dapatkan via `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`.
+4. Upload kode ke ESP32.
 
 #### Dashboard Web
-- Host file `index.html`, `main.js`, dan `style.css` di server (Netlify, Firebase Hosting, atau lokal).
-- Buka dashboard di browser.
+1. Host file `index.html`, `main.js`, dan `style.css` di server (misalnya Netlify, Firebase Hosting, atau lokal).
+2. Akses dashboard melalui browser.
+
+### 3. Pengujian
+- **Sensor Ultrasonik**  
+  Dekatkan objek < 5 cm untuk status *Habis*. Cek output di Serial Monitor (baud 115200).
+- **Notifikasi Telegram**  
+  Saat pakan habis, bot mengirim:  
+  ⚠️ *Pakan ayam hampir habis! Segera isi ulang.*  
+  Cooldown: 1 jam.
+- **Dashboard Web**  
+  Lihat status pakan (*Habis/Penuh*), jarak, status relay, dan kontrol relay dengan tombol *NYALAKAN*/*MATIKAN*.
+- **MQTT**  
+  - ESP32 publish ke: `pakan/status`, `pakan/jarak`, `pakan/relay`.  
+  - Dashboard subscribe dan kontrol ke: `pakan/relay/control`.
 
 ---
 
-### 3️⃣ Pengujian
+## 🔧 Konfigurasi
 
-✅ **Sensor Ultrasonik**  
-- Dekatkan objek < 5 cm → status jadi *Habis*.
-- Cek Serial Monitor (baud 115200).
+### Library Arduino
+Pastikan library berikut terinstal di Arduino IDE:
+- `WiFi`
+- `HTTPClient`
+- `PubSubClient`
 
-✅ **Notifikasi Telegram**  
-- Saat pakan habis, bot mengirim:
-⚠️ Pakan ayam hampir habis! Segera isi ulang.
-- Cooldown default: 1 jam.
+### MQTT Broker
+- Host: `broker.hivemq.com`
+- Port: `1883`
 
-✅ **Dashboard Web**
-- Lihat status: *Habis/Penuh*, jarak, status relay.
-- Gunakan tombol *NYALAKAN* / *MATIKAN* relay.
+---
 
-✅ **MQTT**
-- Pastikan ESP32 publish ke:
-- `pakan/status`
-- `pakan/jarak`
-- `pakan/relay`
-- Dashboard subscribe & kontrol ke `pakan/relay/control`.
+## 📊 Monitoring
+
+### Serial Monitor
+Cek status sistem melalui Serial Monitor (baud 115200):
+📏 Jarak: 1.87 cm
+📤 Status pakan: Habis
+⚠️ Pakan habis terdeteksi!
+ℹ️ Mencoba kirim notif...
+✅ Notifikasi terkirim ke Telegram
+
+---
+
+
+### Dashboard Web
+- URL: `https://your-hosted-site.com`  
+  Menampilkan status pakan, jarak, dan kontrol relay.
 
 ---
 
 ## 🐞 Debugging
 
-- Jika notif Telegram gagal:
-- Cek Serial Monitor:
-  ```
-  📏 Jarak: 1.87 cm
-  📤 Status pakan: Habis
-  ⚠️ Pakan habis terdeteksi!
-  ℹ️ Mencoba kirim notif...
-  ✅ Notifikasi terkirim ke Telegram
-  ```
-- Pastikan:
-  - WiFi terhubung
-  - BOT_TOKEN & CHAT_ID valid
-  - Tes manual:  
-    ```
-    https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage?chat_id=<YOUR_CHAT_ID>&text=Test
-    ```
-- Jika cooldown aktif:
-- Turunkan `notifCooldown` jadi `10000` (10 detik) untuk tes.
-- Jika jarak selalu -1:
-- Cek wiring HC-SR04.
-- Pastikan sensor dapat 5V.
+- **Notifikasi Telegram Gagal**  
+  - Pastikan WiFi terhubung.  
+  - Verifikasi `BOT_TOKEN` dan `CHAT_ID`.  
+  - Tes manual:
+```
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage?chat_id=<YOUR_CHAT_ID>&text=Test
+```
+
+- Jika cooldown aktif, ubah `notifCooldown` ke `10000` (10 detik) untuk pengujian.
+
+- **Jarak Selalu -1**  
+- Periksa kabel HC-SR04.  
+- Pastikan sensor mendapat tegangan 5V.
+
+- **MQTT Gagal**  
+- Pastikan port 1883 tidak diblokir.  
+- Cek koneksi ke `broker.hivemq.com:1883`.
 
 ---
 
-## ⚠️ Catatan
+## ⚠️ Catatan Penting
 
-- Wokwi tidak support HTTP (Telegram). Gunakan ESP32 fisik.
-- MQTT Broker: `broker.hivemq.com:1883` (pastikan port 1883 tidak diblokir).
-- Pastikan library:
-- `WiFi`
-- `HTTPClient`
-- `PubSubClient`
-sudah terinstall di Arduino IDE.
+- Wokwi tidak mendukung HTTP request untuk Telegram. Gunakan ESP32 fisik untuk notifikasi.
+- Pastikan port 1883 pada MQTT broker tidak diblokir.
+- Selalu cek Serial Monitor untuk debugging cepat.
 
 ---
 
 ## 🤝 Kontribusi
 
-- Fork repo & pull request untuk perbaikan/fitur baru.
-- Laporkan bug via issue.
+- **Fork** repository dan kirim **pull request** untuk perbaikan atau fitur baru.
+- Laporkan bug melalui **issue** di GitHub.
 
 ---
 
-## 📄 Lisensi
+## 👨‍💻 Pengembang
 
-Proyek ini menggunakan **MIT License**.
+**Nama Pengembang**  
+- GitHub: [Link GitHub Anda]  
+- Portfolio: [Link Portfolio Anda]
 
 ---
 
-> ✨ *IoT sederhana, bikin ayam tetap kenyang, dan pemiliknya tetap santai!* 😎
+## 📝 Lisensi
+
+<p align="center">
+  <a href="https://github.com/ficrammanifur/ficrammanifur/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT" />
+  </a>
+</p>
+
+---
+
+<div align="center">
+
+**⭐ Beri bintang pada repository ini jika Anda merasa terbantu!**
+
+<p><a href="#top">⬆ Kembali ke Atas</a></p>
+
+</div>
