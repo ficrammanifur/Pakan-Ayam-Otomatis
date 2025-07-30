@@ -187,8 +187,8 @@ https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage?chat_id=<YOUR_CHAT_ID>&
 ## 👨‍💻 Pengembang
 
 **Nama Pengembang**  
-- GitHub: [Link GitHub Anda]  
-- Portfolio: [Link Portfolio Anda]
+- GitHub: (https://github.com/ficrammanifur)  
+- Portfolio: https://ficrammanifur.github.io/ficram-portfolio
 
 ---
 
