@@ -127,10 +127,15 @@ Pastikan library berikut terinstal di Arduino IDE:
 
 ### Serial Monitor
 Cek status sistem melalui Serial Monitor (baud 115200):
+
 📏 Jarak: 1.87 cm
+
 📤 Status pakan: Habis
+
 ⚠️ Pakan habis terdeteksi!
+
 ℹ️ Mencoba kirim notif...
+
 ✅ Notifikasi terkirim ke Telegram
 
 ---
