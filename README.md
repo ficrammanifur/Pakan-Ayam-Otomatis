@@ -1,6 +1,6 @@
 <h1 align="center">
   Sistem Pakan Ayam Otomatis dengan ESP32  
-  <img src="https://www.espressif.com/sites/default/files/ESP32_logo.png" alt="ESP32 Logo" height="30" style="vertical-align: middle; margin-left: 10px;" />
+  <img src="[https://www.espressif.com/sites/default/files/ESP32_logo.png](https://www.pngwing.com/en/free-png-ahbpf)" alt="ESP32 Logo" height="30" style="vertical-align: middle; margin-left: 10px;" />
 </h1>
 
 <p align="center"><em>Sistem IoT untuk memantau dan mengontrol pakan ayam menggunakan ESP32, sensor ultrasonik, MQTT, dan notifikasi Telegram</em></p>
