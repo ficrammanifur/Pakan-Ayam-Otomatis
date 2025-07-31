@@ -1,210 +1,869 @@
-<h1 align="center">
-  Sistem Pakan Ayam Otomatis dengan ESP32  
-  <img src="[https://www.flaticon.com/free-icon/chip_10325739?term=microcontroller&related_id=10325739" alt](https://docs.espressif.com/projects/esp-idf/en/v4.3-beta2/esp32/_images/hw-reference.png)="ESP32 Logo" height="30" style="vertical-align: middle; margin-left: 10px;" />
-</h1>
+<h1 align="center">🐔 Sistem Pakan Ayam Otomatis dengan ESP32</h1>
 
-<p align="center"><em>Sistem IoT untuk memantau dan mengontrol pakan ayam menggunakan ESP32, sensor ultrasonik, MQTT, dan notifikasi Telegram</em></p>
+<p align="center">
+  <img src="chicken-feeder-preview.png" alt="Sistem Pakan Ayam Otomatis Preview" width="700"/>
+</p>
+
+<p align="center">
+  <em>Sistem IoT untuk memantau dan mengontrol pakan ayam menggunakan ESP32, sensor ultrasonik, MQTT, dan notifikasi Telegram</em>
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/last%20commit-today-brightgreen" />
   <img src="https://img.shields.io/badge/language-C%2B%2B-blue" />
   <img src="https://img.shields.io/badge/platform-ESP32-informational" />
   <img src="https://img.shields.io/badge/protocol-MQTT-green" />
+  <img src="https://img.shields.io/badge/notification-Telegram-26A5E4" />
+  <img src="https://img.shields.io/badge/sensor-HC--SR04-orange" />
+  <a href="https://github.com/ficrammanifur/ficrammanifur/blob/main/LICENSE">
+      <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT" />
+  </a>
 </p>
+
+---
+
+## 📑 Table of Contents
+
+- [✨ Overview](#-overview)
+- [🚀 Fitur](#-fitur)
+- [🏗️ Arsitektur Sistem](#️-arsitektur-sistem)
+- [🛠 Komponen](#-komponen)
+- [📁 Struktur File](#-struktur-file)
+- [⚙️ Instalasi](#️-instalasi)
+- [🚀 Cara Penggunaan](#-cara-penggunaan)
+- [🧪 Testing & Simulasi](#-testing--simulasi)
+- [📊 Monitoring](#-monitoring)
+- [🔧 Konfigurasi](#-konfigurasi)
+- [🐞 Troubleshooting](#-troubleshooting)
+- [🤝 Kontribusi](#-kontribusi)
+- [📄 Lisensi](#-lisensi)
+
+---
+
+## ✨ Overview
+
+**Sistem Pakan Ayam Otomatis** adalah solusi IoT modern untuk peternakan ayam yang menggunakan ESP32 sebagai kontroler utama. Sistem ini memantau level pakan secara real-time dan memberikan notifikasi otomatis ketika pakan hampir habis.
+
+### 🎯 Keunggulan Sistem
+- **Monitoring Real-time** - Pantau status pakan 24/7
+- **Notifikasi Cerdas** - Alert Telegram dengan cooldown anti-spam
+- **Kontrol Jarak Jauh** - Dashboard web untuk kontrol motor pakan
+- **Hemat Biaya** - Menggunakan komponen yang terjangkau
+- **Mudah Dipasang** - Plug and play dengan konfigurasi minimal
 
 ---
 
 ## 🚀 Fitur
 
 - ✅ **Pemantauan Jarak Pakan**  
-  Sensor HC-SR04 mendeteksi status pakan: < 5 cm = *Habis*, > 5 cm = *Penuh*.
-- ✅ **Kontrol Relay**  
-  Mengatur motor pakan melalui dashboard web via MQTT.
-- ✅ **Notifikasi Telegram**  
-  Kirim pesan otomatis saat pakan habis (< 5 cm) dengan cooldown 1 jam (anti-spam).
-- ✅ **Dashboard Web**  
-  Menampilkan status pakan, jarak, status relay, dan kontrol real-time.
+  Sensor HC-SR04 mendeteksi status pakan: < 5 cm = *Habis*, > 5 cm = *Penuh*
+
+- ✅ **Kontrol Relay Otomatis**  
+  Mengatur motor pakan melalui dashboard web via protokol MQTT
+
+- ✅ **Notifikasi Telegram Cerdas**  
+  Kirim pesan otomatis saat pakan habis dengan cooldown 1 jam (anti-spam)
+
+- ✅ **Dashboard Web Responsif**  
+  Interface modern untuk monitoring status dan kontrol real-time
+
 - ✅ **Komunikasi MQTT**  
-  Menggunakan broker HiveMQ untuk komunikasi ESP32 ↔ dashboard.
+  Protokol komunikasi yang reliable untuk ESP32 ↔ Dashboard
+
+- ✅ **Simulasi Wokwi**  
+  Dapat diuji menggunakan simulator online sebelum implementasi fisik
+
+---
+
+## 🏗️ Arsitektur Sistem
+
+### 🔗 Diagram Blok Sistem
+
+```text
+┌─────────────────┐    WiFi     ┌─────────────────┐    MQTT    ┌─────────────────┐
+│   Dashboard     │ ◄─────────► │      ESP32      │ ◄────────► │  MQTT Broker    │
+│   Web Client    │             │  (Controller)   │            │  (HiveMQ)       │
+└─────────────────┘             └─────────────────┘            └─────────────────┘
+                                         │
+                                         │ GPIO
+                                         ▼
+                    ┌────────────────────────────────────────┐
+                    │              Hardware Layer            │
+                    │  ┌─────────────┐    ┌─────────────┐    │
+                    │  │   HC-SR04   │    │    Relay    │    │
+                    │  │   Sensor    │    │   Module    │    │
+                    │  │             │    │             │    │
+                    │  │ Trig: Pin14 │    │  Pin: 26    │    │
+                    │  │ Echo: Pin27 │    │             │    │
+                    │  └─────────────┘    └─────────────┘    │
+                    └────────────────────────────────────────┘
+                                         │
+                                         ▼
+                    ┌────────────────────────────────────────┐
+                    │            Physical Layer              │
+                    │  ┌─────────────┐    ┌─────────────┐    │
+                    │  │   Feeder    │    │   Motor     │    │
+                    │  │   Container │    │   Pakan     │    │
+                    │  └─────────────┘    └─────────────┘    │
+                    └────────────────────────────────────────┘
+```
+
+### 📊 Flow Diagram
+
+```mermaid
+graph TD
+    A[ESP32 Boot] --> B[Connect WiFi]
+    B --> C[Connect MQTT Broker]
+    C --> D[Read HC-SR04 Sensor]
+    D --> E{Distance < 5cm?}
+    E -->|Yes| F[Status: Habis]
+    E -->|No| G[Status: Penuh]
+    F --> H{Cooldown Active?}
+    G --> I[Publish Status to MQTT]
+    H -->|No| J[Send Telegram Alert]
+    H -->|Yes| I
+    J --> K[Set Cooldown Timer]
+    K --> I
+    I --> L[Update Dashboard]
+    L --> M{Relay Command?}
+    M -->|Yes| N[Control Motor]
+    M -->|No| O[Wait 2 seconds]
+    N --> O
+    O --> D
+```
 
 ---
 
 ## 🛠 Komponen
 
-### Perangkat Keras
-- **ESP32**  
-  Mikrokontroler utama.
-- **Sensor Ultrasonik HC-SR04**  
-  - Trig: Pin 14  
-  - Echo: Pin 27  
-  - VCC: 5V  
-  - GND: GND  
-- **Relay**  
-  - Pin: 26  
+### 📦 Perangkat Keras
 
-### Perangkat Lunak
-- **Arduino IDE**: Untuk memprogram ESP32.
-- **MQTT.js**: Logika dashboard web.
-- **Broker MQTT**: `broker.hivemq.com:1883`.
-- **API Telegram**: Untuk notifikasi.
+| Komponen | Spesifikasi | Pin Connection | Fungsi |
+|----------|-------------|----------------|---------|
+| **ESP32** | ESP32-WROOM-32 | - | Mikrokontroler utama |
+| **HC-SR04** | Ultrasonic Sensor | Trig: 14, Echo: 27 | Deteksi jarak pakan |
+| **Relay Module** | 5V Single Channel | Signal: 26 | Kontrol motor pakan |
+| **Power Supply** | 5V 2A | VIN, GND | Catu daya sistem |
+| **Jumper Wires** | Male-Female | - | Koneksi antar komponen |
+
+### 💻 Perangkat Lunak
+
+| Software | Version | Fungsi |
+|----------|---------|---------|
+| **Arduino IDE** | 2.0+ | Development environment |
+| **ESP32 Board Package** | 2.0.0+ | ESP32 support |
+| **MQTT.js** | Latest | Web dashboard communication |
+| **HiveMQ Broker** | Public | MQTT message broker |
+| **Telegram Bot API** | v6.0+ | Push notifications |
 
 ---
 
 ## 📁 Struktur File
 
-| File                | Deskripsi                              |
-|---------------------|----------------------------------------|
-| `pakan_ayam.ino`    | Kode utama ESP32 (sensor, relay, MQTT, Telegram) |
-| `index.html`        | Antarmuka dashboard web                |
-| `main.js`           | Logika dashboard dan komunikasi MQTT   |
-| `style.css`         | Styling untuk dashboard web            |
-| `README.md`         | Dokumentasi proyek                     |
+```text
+chicken-feeder-esp32/
+├── 📄 README.md                    # Dokumentasi proyek
+├── 📋 LICENSE                      # MIT License
+├── 🤖 ESP32/
+│   └── pakan_ayam.ino             # Kode utama ESP32
+├── 🌐 web-dashboard/
+│   ├── index.html                 # Dashboard interface
+│   ├── main.js                    # MQTT logic & controls
+│   └── style.css                  # Responsive styling
+├── 📊 simulation/
+│   └── wokwi-project.json         # Wokwi simulation config
+├── 🖼️ assets/
+│   ├── circuit-diagram.png        # Skema rangkaian
+│   ├── dashboard-preview.png      # Preview dashboard
+│   └── telegram-notification.png  # Contoh notifikasi
+└── 📖 docs/
+    ├── installation-guide.md      # Panduan instalasi detail
+    └── troubleshooting.md         # Panduan troubleshooting
+```
 
 ---
 
-## 🧪 Simulasi
+## ⚙️ Instalasi
 
-Proyek ini dapat diuji menggunakan [Wokwi Simulator](https://wokwi.com).  
-⚠️ **Catatan**: Wokwi tidak mendukung HTTP request untuk notifikasi Telegram. Gunakan ESP32 fisik dan koneksi WiFi untuk pengujian penuh.
+### 1. 🔧 Persiapan Hardware
+
+#### Wiring Diagram
+<p align="center">
+  <img src="assets/circuit-diagram.png" alt="Circuit Diagram" width="600"/>
+</p>
+
+#### Koneksi Pin
+
+```text
+ESP32          HC-SR04
+─────────────────────────
+3.3V     ───►  VCC
+GND      ───►  GND
+Pin 14   ───►  Trig
+Pin 27   ───►  Echo
+
+ESP32          Relay Module
+─────────────────────────
+5V       ───►  VCC
+GND      ───►  GND
+Pin 26   ───►  IN
+```
+
+### 2. 📱 Setup Telegram Bot
+
+1. **Buat Bot Baru**
+   ```
+   1. Chat dengan @BotFather di Telegram
+   2. Kirim /newbot
+   3. Ikuti instruksi untuk nama bot
+   4. Simpan BOT_TOKEN yang diberikan
+   ```
+
+2. **Dapatkan Chat ID**
+   ```bash
+   # Kirim pesan ke bot Anda, lalu akses URL ini:
+   https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+   
+   # Cari "chat":{"id": XXXXXXX
+   # Simpan angka tersebut sebagai CHAT_ID
+   ```
+
+### 3. 💻 Setup Arduino IDE
+
+1. **Install ESP32 Board**
+   ```
+   File → Preferences → Additional Board Manager URLs:
+   https://dl.espressif.com/dl/package_esp32_index.json
+   
+   Tools → Board → Boards Manager → Search "ESP32" → Install
+   ```
+
+2. **Install Required Libraries**
+   ```
+   Tools → Manage Libraries → Install:
+   - WiFi (built-in)
+   - HTTPClient (built-in)  
+   - PubSubClient by Nick O'Leary
+   - ArduinoJson by Benoit Blanchon
+   ```
+
+### 4. ⚙️ Konfigurasi Kode
+
+Edit file `arduino/pakan_ayam.ino`:
+
+```cpp
+// WiFi Configuration
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
+
+// Telegram Configuration  
+const String BOT_TOKEN = "YOUR_BOT_TOKEN";
+const String CHAT_ID = "YOUR_CHAT_ID";
+
+// MQTT Configuration
+const char* mqtt_server = "broker.hivemq.com";
+const int mqtt_port = 1883;
+const char* mqtt_client_id = "ChickenFeeder_001";
+```
+
+### 5. 🌐 Deploy Web Dashboard
+
+#### Option A: GitHub Pages
+```bash
+git clone https://github.com/ficrammanifur/chicken-feeder-esp32.git
+cd chicken-feeder-esp32
+git add .
+git commit -m "Initial setup"
+git push origin main
+
+# Enable GitHub Pages di repository settings
+```
+
+#### Option B: Local Server
+```bash
+cd web-dashboard
+python -m http.server 8080
+# Akses: http://localhost:8080
+```
 
 ---
 
 ## 🚀 Cara Penggunaan
 
-### 1. Persiapan Perangkat Keras
-1. Hubungkan **HC-SR04**:
-   - Trig → Pin 14
-   - Echo → Pin 27
-   - VCC → 5V
-   - GND → GND
-2. Hubungkan **Relay** ke Pin 26.
-3. Pastikan ESP32 terhubung ke WiFi.
+### 📋 Step-by-Step Operation
 
-### 2. Konfigurasi Perangkat Lunak
+1. **🔌 Power On System**
+   - Hubungkan ESP32 ke power supply
+   - Tunggu hingga LED built-in berkedip (WiFi connected)
+   - Cek Serial Monitor untuk konfirmasi koneksi
 
-#### ESP32
-1. Buka `pakan_ayam.ino` di Arduino IDE.
-2. Ganti `ssid` dan `password` sesuai jaringan WiFi Anda.
-3. Isi konfigurasi Telegram:
-   - `BOT_TOKEN`: Dapatkan dari BotFather.
-   - `CHAT_ID`: Dapatkan via `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`.
-4. Upload kode ke ESP32.
+2. **🌐 Akses Dashboard**
+   ```
+   URL: https://yourusername.github.io/chicken-feeder-esp32
+   ```
 
-#### Dashboard Web
-1. Host file `index.html`, `main.js`, dan `style.css` di server (misalnya Netlify, Firebase Hosting, atau lokal).
-2. Akses dashboard melalui browser.
+3. **📊 Monitor Status**
+   - **Jarak**: Menampilkan jarak sensor ke pakan (cm)
+   - **Status**: Habis (<5cm) atau Penuh (≥5cm)  
+   - **Relay**: ON/OFF status motor pakan
+   - **Last Update**: Timestamp update terakhir
 
-### 3. Pengujian
-- **Sensor Ultrasonik**  
-  Dekatkan objek < 5 cm untuk status *Habis*. Cek output di Serial Monitor (baud 115200).
-- **Notifikasi Telegram**  
-  Saat pakan habis, bot mengirim:  
-  ⚠️ *Pakan ayam hampir habis! Segera isi ulang.*  
-  Cooldown: 1 jam.
-- **Dashboard Web**  
-  Lihat status pakan (*Habis/Penuh*), jarak, status relay, dan kontrol relay dengan tombol *NYALAKAN*/*MATIKAN*.
-- **MQTT**  
-  - ESP32 publish ke: `pakan/status`, `pakan/jarak`, `pakan/relay`.  
-  - Dashboard subscribe dan kontrol ke: `pakan/relay/control`.
+4. **🎛️ Kontrol Manual**
+   - Klik tombol **NYALAKAN** untuk menjalankan motor
+   - Klik tombol **MATIKAN** untuk menghentikan motor
+   - Status akan update secara real-time
+
+5. **📱 Notifikasi Telegram**
+   - Otomatis terkirim saat pakan habis
+   - Cooldown 1 jam untuk mencegah spam
+   - Format: "⚠️ Pakan ayam hampir habis! Segera isi ulang."
 
 ---
 
-## 🔧 Konfigurasi
+## 🧪 Testing & Simulasi
 
-### Library Arduino
-Pastikan library berikut terinstal di Arduino IDE:
-- `WiFi`
-- `HTTPClient`
-- `PubSubClient`
+### 🖥️ Wokwi Simulator
 
-### MQTT Broker
-- Host: `broker.hivemq.com`
-- Port: `1883`
+Proyek ini dapat diuji menggunakan [Wokwi Simulator](https://wokwi.com/projects/418547391166436353):
+
+1. **Import Project**
+   ```
+   https://wokwi.com/projects/new/esp32
+   Copy-paste kode dari pakan_ayam.ino
+   ```
+
+2. **Add Components**
+   - ESP32
+   - HC-SR04 Ultrasonic Sensor  
+   - Relay Module
+   - Connecting wires
+
+3. **Limitations**
+   ⚠️ **Catatan**: Wokwi tidak mendukung:
+   - HTTP requests (Telegram notifications)
+   - Real WiFi connection
+   - MQTT over internet
+
+### 🔬 Physical Testing
+
+#### Test Sensor Ultrasonik
+```cpp
+// Monitor Serial output
+void loop() {
+  float distance = getDistance();
+  Serial.print("Jarak: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+  delay(1000);
+}
+```
+
+#### Test Telegram Notification
+```bash
+# Manual test via browser/curl
+https://api.telegram.org/bot<BOT_TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=Test%20notification
+```
+
+#### Test MQTT Communication
+```bash
+# Subscribe to topics
+mosquitto_sub -h broker.hivemq.com -t "pakan/status"
+mosquitto_sub -h broker.hivemq.com -t "pakan/jarak"  
+mosquitto_sub -h broker.hivemq.com -t "pakan/relay"
+
+# Publish test commands
+mosquitto_pub -h broker.hivemq.com -t "pakan/relay/control" -m "ON"
+mosquitto_pub -h broker.hivemq.com -t "pakan/relay/control" -m "OFF"
+```
 
 ---
 
 ## 📊 Monitoring
 
-### Serial Monitor
-Cek status sistem melalui Serial Monitor (baud 115200):
+### 🖥️ Serial Monitor Output
 
-📏 Jarak: 1.87 cm
+Baud Rate: **115200**
 
+```text
+[INFO] WiFi connected: 192.168.1.100
+[INFO] MQTT connected to broker.hivemq.com
+[INFO] Telegram bot ready
+─────────────────────────────────────
+📏 Jarak: 12.45 cm
+📤 Status pakan: Penuh  
+🔌 Relay status: OFF
+📡 Data published to MQTT
+─────────────────────────────────────
+📏 Jarak: 3.21 cm
 📤 Status pakan: Habis
-
-⚠️ Pakan habis terdeteksi!
-
-ℹ️ Mencoba kirim notif...
-
+⚠️  Pakan habis terdeteksi!
+ℹ️  Mencoba kirim notifikasi...
 ✅ Notifikasi terkirim ke Telegram
-
----
-
-
-### Dashboard Web
-- URL: `https://your-hosted-site.com`  
-  Menampilkan status pakan, jarak, dan kontrol relay.
-
----
-
-## 🐞 Debugging
-
-- **Notifikasi Telegram Gagal**  
-  - Pastikan WiFi terhubung.  
-  - Verifikasi `BOT_TOKEN` dan `CHAT_ID`.  
-  - Tes manual:
-```
-https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage?chat_id=<YOUR_CHAT_ID>&text=Test
+🔌 Relay status: OFF
+📡 Data published to MQTT
+─────────────────────────────────────
 ```
 
-- Jika cooldown aktif, ubah `notifCooldown` ke `10000` (10 detik) untuk pengujian.
+### 📱 Dashboard Web Interface
 
-- **Jarak Selalu -1**  
-- Periksa kabel HC-SR04.  
-- Pastikan sensor mendapat tegangan 5V.
+<p align="center">
+  <img src="assets/dashboard-preview.png" alt="Dashboard Preview" width="800"/>
+</p>
 
-- **MQTT Gagal**  
-- Pastikan port 1883 tidak diblokir.  
-- Cek koneksi ke `broker.hivemq.com:1883`.
+**Features:**
+- Real-time status updates
+- Interactive relay controls  
+- Responsive design (mobile-friendly)
+- Connection status indicator
+- Historical data display
+
+### 📲 Telegram Notifications
+
+<p align="center">
+  <img src="assets/telegram-notification.png" alt="Telegram Notification" width="300"/>
+</p>
+
+**Format Pesan:**
+```
+🐔 Chicken Feeder Alert
+
+⚠️ Pakan ayam hampir habis!
+📏 Jarak terdeteksi: 3.2 cm
+⏰ Waktu: 2024-01-15 14:30:25
+
+Segera isi ulang pakan untuk menjaga kesehatan ayam Anda.
+```
 
 ---
 
-## ⚠️ Catatan Penting
+## 🔧 Konfigurasi
 
-- Wokwi tidak mendukung HTTP request untuk Telegram. Gunakan ESP32 fisik untuk notifikasi.
-- Pastikan port 1883 pada MQTT broker tidak diblokir.
-- Selalu cek Serial Monitor untuk debugging cepat.
+### ⚙️ Parameter Sistem
+
+Edit konstanta di `pakan_ayam.ino`:
+
+```cpp
+// Sensor Configuration
+#define TRIG_PIN 14
+#define ECHO_PIN 27
+#define RELAY_PIN 26
+
+// Thresholds
+#define EMPTY_THRESHOLD 5.0    // cm - batas pakan habis
+#define MAX_DISTANCE 400.0     // cm - jarak maksimum sensor
+
+// Timing Configuration  
+#define SENSOR_DELAY 2000      // ms - interval pembacaan sensor
+#define NOTIF_COOLDOWN 3600000 // ms - cooldown notifikasi (1 jam)
+#define MQTT_KEEPALIVE 60      // seconds - MQTT keepalive
+
+// MQTT Topics
+#define TOPIC_STATUS "pakan/status"
+#define TOPIC_DISTANCE "pakan/jarak"  
+#define TOPIC_RELAY "pakan/relay"
+#define TOPIC_CONTROL "pakan/relay/control"
+```
+
+### 🌐 Web Dashboard Configuration
+
+Edit `web-dashboard/main.js`:
+
+```javascript
+// MQTT Broker Configuration
+const MQTT_BROKER = 'wss://broker.hivemq.com:8884/mqtt';
+const MQTT_OPTIONS = {
+    keepalive: 60,
+    clientId: 'ChickenFeeder_Dashboard_' + Math.random().toString(16).substr(2, 8),
+    protocolId: 'MQTT',
+    protocolVersion: 4,
+    clean: true,
+    reconnectPeriod: 1000,
+    connectTimeout: 30 * 1000
+};
+
+// Update Intervals
+const STATUS_UPDATE_INTERVAL = 1000; // ms
+const CONNECTION_CHECK_INTERVAL = 5000; // ms
+```
+
+### 📱 Telegram Configuration
+
+```cpp
+// Telegram Bot Settings
+const String BOT_TOKEN = "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz";
+const String CHAT_ID = "123456789";
+const String BOT_NAME = "ChickenFeederBot";
+
+// Message Templates
+const String EMPTY_MESSAGE = "⚠️ Pakan ayam hampir habis! Segera isi ulang.";
+const String SYSTEM_START = "🐔 Sistem pakan ayam telah aktif dan siap beroperasi.";
+const String SYSTEM_ERROR = "❌ Terjadi error pada sistem pakan ayam.";
+```
+
+---
+
+## 🐞 Troubleshooting
+
+### ❌ Common Issues & Solutions
+
+#### **1. WiFi Connection Failed**
+
+**Symptoms:**
+```text
+[ERROR] WiFi connection failed
+[ERROR] Retrying in 5 seconds...
+```
+
+**Solutions:**
+- ✅ Periksa SSID dan password WiFi
+- ✅ Pastikan ESP32 dalam jangkauan WiFi
+- ✅ Restart router jika perlu
+- ✅ Coba gunakan hotspot mobile untuk testing
+
+```cpp
+// Debug WiFi connection
+void connectWiFi() {
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  
+  WiFi.begin(ssid, password);
+  int attempts = 0;
+  
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi connected!");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nWiFi connection failed!");
+  }
+}
+```
+
+#### **2. MQTT Connection Issues**
+
+**Symptoms:**
+```text
+[ERROR] MQTT connection failed, rc=-2
+[ERROR] Retrying MQTT connection...
+```
+
+**Solutions:**
+- ✅ Periksa koneksi internet
+- ✅ Coba broker alternatif: `test.mosquitto.org`
+- ✅ Periksa firewall/port blocking
+- ✅ Gunakan client ID yang unik
+
+```cpp
+// MQTT Error Codes
+// -4 : Connection timeout
+// -3 : Connection lost  
+// -2 : Connect failed
+// -1 : Disconnected
+//  0 : Connected
+//  1 : Bad protocol
+//  2 : Bad client ID
+//  3 : Unavailable
+//  4 : Bad credentials
+//  5 : Unauthorized
+```
+
+#### **3. Sensor Reading -1 (Invalid)**
+
+**Symptoms:**
+```text
+📏 Jarak: -1.00 cm
+📤 Status: Error
+```
+
+**Solutions:**
+- ✅ Periksa wiring HC-SR04
+- ✅ Pastikan power supply 5V stabil
+- ✅ Cek tidak ada objek menghalangi sensor
+- ✅ Ganti sensor jika rusak
+
+```cpp
+// Enhanced sensor reading with error handling
+float getDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // 30ms timeout
+  
+  if (duration == 0) {
+    Serial.println("[ERROR] Sensor timeout");
+    return -1;
+  }
+  
+  float distance = duration * 0.034 / 2;
+  
+  if (distance > MAX_DISTANCE) {
+    Serial.println("[ERROR] Distance out of range");
+    return -1;
+  }
+  
+  return distance;
+}
+```
+
+#### **4. Telegram Notifications Not Working**
+
+**Symptoms:**
+```text
+ℹ️ Mencoba kirim notifikasi...
+❌ HTTP Error: -1
+```
+
+**Solutions:**
+- ✅ Verifikasi BOT_TOKEN dan CHAT_ID
+- ✅ Test manual via browser
+- ✅ Periksa koneksi HTTPS
+- ✅ Pastikan bot tidak di-block
+
+```bash
+# Manual test Telegram API
+curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/sendMessage" \
+     -H "Content-Type: application/json" \
+     -d '{"chat_id": "<CHAT_ID>", "text": "Test message"}'
+```
+
+#### **5. Dashboard Not Updating**
+
+**Symptoms:**
+- Dashboard shows "Disconnected"
+- No real-time updates
+- Control buttons not working
+
+**Solutions:**
+- ✅ Check browser console for errors
+- ✅ Verify MQTT broker connection
+- ✅ Clear browser cache
+- ✅ Try different browser
+
+```javascript
+// Debug MQTT in browser console
+client.on('connect', function () {
+    console.log('MQTT Connected');
+});
+
+client.on('error', function (error) {
+    console.log('MQTT Error:', error);
+});
+
+client.on('message', function (topic, message) {
+    console.log('Received:', topic, message.toString());
+});
+```
+
+### 🔧 Advanced Debugging
+
+#### Enable Debug Mode
+
+```cpp
+// Add to top of pakan_ayam.ino
+#define DEBUG_MODE 1
+
+#if DEBUG_MODE
+  #define DEBUG_PRINT(x) Serial.print(x)
+  #define DEBUG_PRINTLN(x) Serial.println(x)
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+#endif
+```
+
+#### Memory Usage Monitoring
+
+```cpp
+void printMemoryUsage() {
+  DEBUG_PRINT("Free heap: ");
+  DEBUG_PRINT(ESP.getFreeHeap());
+  DEBUG_PRINTLN(" bytes");
+}
+```
+
+#### Network Diagnostics
+
+```cpp
+void networkDiagnostics() {
+  DEBUG_PRINTLN("=== Network Diagnostics ===");
+  DEBUG_PRINT("WiFi Status: ");
+  DEBUG_PRINTLN(WiFi.status());
+  DEBUG_PRINT("IP Address: ");
+  DEBUG_PRINTLN(WiFi.localIP());
+  DEBUG_PRINT("Signal Strength: ");
+  DEBUG_PRINT(WiFi.RSSI());
+  DEBUG_PRINTLN(" dBm");
+  DEBUG_PRINTLN("===========================");
+}
+```
 
 ---
 
 ## 🤝 Kontribusi
 
-- **Fork** repository dan kirim **pull request** untuk perbaikan atau fitur baru.
-- Laporkan bug melalui **issue** di GitHub.
+Kontribusi sangat diterima! Mari bersama-sama mengembangkan sistem ini.
+
+### 📋 How to Contribute
+
+1. **Fork** repository ini
+2. **Create** feature branch (`git checkout -b feature/AmazingFeature`)
+3. **Commit** changes (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** to branch (`git push origin feature/AmazingFeature`)
+5. **Open** Pull Request
+
+### 🎯 Areas for Contribution
+
+- [ ] **Mobile App** - Develop native Android/iOS app
+- [ ] **Data Logging** - Add database integration for historical data
+- [ ] **Multiple Sensors** - Support for multiple feeding stations
+- [ ] **AI Integration** - Predictive feeding based on consumption patterns
+- [ ] **Security** - Add authentication and encryption
+- [ ] **Documentation** - Improve docs and add video tutorials
+
+### 🐛 Bug Reports
+
+Gunakan GitHub Issues dengan template berikut:
+
+```markdown
+**Bug Description:**
+Brief description of the issue
+
+**Hardware Setup:**
+- ESP32 model: 
+- Sensor model:
+- Power supply:
+
+**Software Environment:**
+- Arduino IDE version:
+- ESP32 board package version:
+- Library versions:
+
+**Steps to Reproduce:**
+1. Step one
+2. Step two  
+3. Step three
+
+**Expected Behavior:**
+What should happen
+
+**Actual Behavior:**
+What actually happens
+
+**Serial Monitor Output:**
+```
+Paste serial monitor output here
+```
+
+**Additional Context:**
+Any other relevant information
+```
+
+### 💡 Feature Requests
+
+Untuk request fitur baru, buat GitHub Issue dengan label "enhancement":
+
+```markdown
+**Feature Description:**
+Clear description of the proposed feature
+
+**Use Case:**
+Why is this feature needed?
+
+**Proposed Implementation:**
+How should this feature work?
+
+**Additional Notes:**
+Any other relevant information
+```
 
 ---
 
 ## 👨‍💻 Pengembang
 
-**Nama Pengembang**  
-- GitHub: (https://github.com/ficrammanifur)  
-- Portfolio: https://ficrammanifur.github.io/ficram-portfolio
+**Ficram Manifur**
+- 🐙 GitHub: [@ficrammanifur](https://github.com/ficrammanifur)
+- 🌐 Portfolio: [ficrammanifur.github.io/ficram-portfolio](https://ficrammanifur.github.io/ficram-portfolio)
+- 📧 Email: ficramm@gmail.com
 
 ---
 
-## 📝 Lisensi
+## 🙏 Acknowledgments
 
-<p align="center">
-  <a href="https://github.com/ficrammanifur/ficrammanifur/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT" />
-  </a>
-</p>
+- **ESP32 Community** - Untuk dokumentasi dan library yang luar biasa
+- **HiveMQ** - Public MQTT broker untuk development dan testing
+- **Telegram** - Bot API yang mudah digunakan
+- **Wokwi** - Platform simulasi yang membantu development
+- **Arduino Community** - Ecosystem yang mendukung project IoT
+- **Open Source Contributors** - Yang telah berkontribusi pada libraries yang digunakan
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+
+```text
+MIT License
+
+Copyright (c) 2024 Ficram Manifur
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+## 📈 Roadmap
+
+### 🎯 Version 2.0 (Planned)
+
+- [ ] **Multi-Station Support** - Kontrol beberapa tempat pakan
+- [ ] **Data Analytics** - Grafik konsumsi pakan harian/mingguan
+- [ ] **Mobile App** - Aplikasi Android/iOS native
+- [ ] **Voice Alerts** - Notifikasi suara melalui speaker
+- [ ] **Camera Integration** - Monitoring visual kandang ayam
+
+### 🎯 Version 3.0 (Future)
+
+- [ ] **AI Prediction** - Prediksi kebutuhan pakan berdasarkan pola
+- [ ] **Weather Integration** - Penyesuaian pakan berdasarkan cuaca
+- [ ] **Blockchain Logging** - Immutable record untuk traceability
+- [ ] **Solar Power** - Integrasi dengan panel surya
+- [ ] **Mesh Network** - Komunikasi antar multiple stations
 
 ---
 
 <div align="center">
 
-**⭐ Beri bintang pada repository ini jika Anda merasa terbantu!**
+**🐔 Making Poultry Farming Smarter with IoT**
+
+**⚡ Built with ESP32, MQTT & Telegram API**
+
+**⭐ Star this repo if you like it!**
 
 <p><a href="#top">⬆ Kembali ke Atas</a></p>
 
