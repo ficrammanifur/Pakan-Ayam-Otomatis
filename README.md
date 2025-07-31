@@ -814,7 +814,7 @@ Proyek ini dilisensikan di bawah [MIT License](LICENSE).
 ```text
 MIT License
 
-Copyright (c) 2024 Ficram Manifur
+Copyright (c) 2025 ficrammanifur
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
